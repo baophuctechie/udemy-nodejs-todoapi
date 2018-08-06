@@ -34,7 +34,15 @@ app.get('/', function (req, res) {
  * Get the list of todos
  */
 app.get('/todos', function(req, res) {
-    res.json(todos);
+    var queryParams = req.query;
+    var filtedTodos = todos;
+    if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
+        filtedTodos = _.where(filtedTodos, {completed: true});
+    } else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
+        filtedTodos = _.where(filtedTodos, {completed: false});
+    }
+    
+    res.json(filtedTodos);
 });
 
 /**
