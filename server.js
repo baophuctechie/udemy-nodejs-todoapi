@@ -36,12 +36,20 @@ app.get('/', function (req, res) {
 app.get('/todos', function(req, res) {
     var queryParams = req.query;
     var filtedTodos = todos;
+    // Filter via completed ?completed=false/true
     if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'true') {
         filtedTodos = _.where(filtedTodos, {completed: true});
     } else if (queryParams.hasOwnProperty('completed') && queryParams.completed === 'false') {
         filtedTodos = _.where(filtedTodos, {completed: false});
     }
-    
+
+    // Filter via description ?q=xxxx
+    if (queryParams.hasOwnProperty('q') && queryParams.q.trim().length > 0) {
+        filtedTodos = _.filter(filtedTodos, function (todo) {
+            return todo.description.toLowerCase().indexOf(queryParams.q.toLowerCase()) > -1;
+        });
+    }
+
     res.json(filtedTodos);
 });
 
