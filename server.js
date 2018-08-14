@@ -1,6 +1,7 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require("underscore");
+var db = require('./db.js');
 
 var app = express();
 var PORT = process.env.PORT || 3000; // only for Heroku port as process.env.PORT
@@ -73,11 +74,31 @@ app.get('/todos/:id', function(req, res) {
 });
 
 /**
- * POST add the todo item to the todos array
+ * POST add the todo item to the todos array / database
  */
 app.post('/todos', function(req, res) {
     //var body = req.body;
     var body = _.pick(req.body, 'description', 'completed');
+    
+    if (!_.isBoolean(body.completed) || !_.isString(body.description)
+            || body.description.trim().length === 0) {
+        return res.status(400).send();
+    }
+    db.todo.create({
+        description: body.description.trim(),
+        completed: body.completed
+    }).then(function(todo) {
+        if (todo) {
+            res.status(200).json(todo);
+        } else {
+            res.status(404).json({
+                "error": "No todo created."
+            });
+        }
+    }).catch(function(e) {
+        res.status(400).json(e);
+    });
+    /* 
     if (!_.isBoolean(body.completed) || !_.isString(body.description) 
             || body.description.trim().length === 0) {
         return res.status(400).send();
@@ -86,6 +107,8 @@ app.post('/todos', function(req, res) {
     body.id = todoNextId++;
     todos.push(body);
     res.json(body);
+    */
+    
     /*var todoItem = {
         'id': todoNextId++,
         'description': body.description,
@@ -144,6 +167,8 @@ app.put('/todos/:id', function(req, res) {
     res.json(matchedTodo);
 })
 
-app.listen(PORT, function () {
-    console.log('Express listening on port ' + PORT + '!');
-});
+db.sequelize.sync().then(function() {
+    app.listen(PORT, function () {
+        console.log('Express listening on port ' + PORT + '!');
+    });
+})
